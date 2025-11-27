@@ -1,0 +1,121 @@
+;;; ----------------------------------------
+;;;  Функція F(i) з повною перевіркою типів
+;;; ----------------------------------------
+
+(defun F (i)
+
+  (when (null i)
+    (error "Помилка: аргумент i = NIL недопустимий."))
+
+  (when (not (integerp i))
+    (error "Помилка: i має бути ЦІЛИМ числом, отримано: ~A" i))
+
+  (when (<= i 0)
+    (error "Помилка: i має бути додатним числом (>0), отримано: ~A" i))
+
+  ;; Основна логіка
+  (cond
+    ((= i 1) 1.0)
+    ((= i 6) 1.0)
+
+    ((and (>= i 2) (<= i 5))
+     (/ (* (sqrt (F (1- i)))
+           (log i))
+        7))
+
+    ((and (>= i 7) (<= i 15))
+     (/ (* (sqrt (F (1- i)))
+           (sqrt i))
+        4))
+
+    (t
+     (error "Помилка: значення i має бути в межах 1..15, отримано: ~A" i))))
+
+
+;;; ----------------------------------------
+;;;   Вивід значень F(1..15)
+;;; ----------------------------------------
+
+(format t " F(i) values:~%")
+(loop for i from 1 to 15 do
+     (format t " F(~2D) = ~,10F~%" i (F i)))
+
+
+;;; ----------------------------------------
+;;;   Модульні ТЕСТИ
+;;; ----------------------------------------
+
+;;; ----------------------------------------
+;;;  ТЕСТИ ДЛЯ ФУНКЦІЇ F
+;;;  (у стилі test-bubble-sort)
+;;; ----------------------------------------
+
+(defparameter *F-test-total* 0)
+(defparameter *F-test-passed* 0)
+
+(defun report-F-test-result (name passed)
+  
+  (incf *F-test-total*)
+  (if passed
+      (progn
+        (incf *F-test-passed*)
+        (format t "~A ... PASSED~%" name))
+      (format t "~A ... FAILED~%" name)))
+
+(defun approx-equal (a b &optional (eps 1e-6))
+
+  (< (abs (- a b)) eps))
+
+(defun check-F-value (name i expected)
+ 
+  (let* ((result (F i))
+         (passed (approx-equal result expected)))
+    (report-F-test-result name passed)))
+
+(defun check-F-error (name arg)
+
+  (let ((raised-error nil))
+    (handler-case
+        (progn
+          (F arg)
+          (setf raised-error nil))
+      (error ()
+        (setf raised-error t)))
+    (report-F-test-result name raised-error)))
+
+
+(defun test-F ()
+  (setf *F-test-total* 0
+        *F-test-passed* 0)
+
+ 
+  (check-F-value "F(1) base" 1 1.0)
+  (check-F-value "F(6) base" 6 1.0)
+
+  
+  (check-F-value "F(2)" 2 0.09902102579)
+  (check-F-value "F(3)" 3 0.04938671311)
+  (check-F-value "F(4)" 4 0.04401112583)
+  (check-F-value "F(5)" 5 0.04823446064)
+
+  
+  (check-F-value "F(7)" 7 0.66143782776)
+  (check-F-value "F(10)" 10 0.59621516662)
+  (check-F-value "F(15)" 15 0.87157149471)
+
+
+  (check-F-error "F(nil) should error" nil)
+  (check-F-error "F(list) should error" '(1 2 3))
+  (check-F-error "F(0) should error" 0)
+  (check-F-error "F(-1) should error" -1)
+  (check-F-error "F(20) should error" 20)
+
+  
+  (format t "~%Summary: ~D/~D tests passed.~%"
+          *F-test-passed* *F-test-total*)
+
+  (if (= *F-test-passed* *F-test-total*)
+      (format t "All F-tests PASSED successfully!~%")
+      (format t "Some F-tests FAILED.~%"))
+
+  (values))
